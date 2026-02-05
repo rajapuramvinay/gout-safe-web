@@ -324,7 +324,7 @@ const App = () => {
             Built with ❤️ for better health management
           </p>
           <p className="footer-signature">
-            Created by <strong>Vinay Rajapuram</strong> | © 2024
+            Created by <strong>Vinay Rajapuram, Sraddha Pulagum Sree</strong> | © 2026
           </p>
           <p className="footer-disclaimer">
             Disclaimer: This tool provides general information. Always consult healthcare professionals for medical advice.
