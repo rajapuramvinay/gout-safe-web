@@ -1,34 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Search, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
-import axios from 'axios';
+import { Search, CheckCircle, AlertCircle, XCircle, Info, BookOpen, Users, Heart } from 'lucide-react';
+import './App.css';
 
-const FoodSearch = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+const App = () => {
   const [foods, setFoods] = useState([]);
-  const [filteredFoods, setFilteredFoods] = useState([]);
-  const [selectedFood, setSelectedFood] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [activeTab, setActiveTab] = useState('search');
 
   useEffect(() => {
     fetchFoods();
   }, []);
 
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const filtered = foods.filter(food =>
-        food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        food.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredFoods(filtered);
-    } else {
-      setFilteredFoods([]);
-    }
-  }, [searchQuery, foods]);
-
   const fetchFoods = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/foods`);
-      setFoods(response.data.foods || []);
+      const response = await fetch('https://gout-safe-backend-production.up.railway.app/api/foods');
+      const data = await response.json();
+      setFoods(data.foods);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching foods:', error);
@@ -36,246 +25,373 @@ const FoodSearch = () => {
     }
   };
 
-  const getRiskIcon = (riskLevel) => {
-    switch (riskLevel) {
-      case 'safe':
-        return <CheckCircle className="w-6 h-6 text-green-500" />;
-      case 'caution':
-        return <AlertCircle className="w-6 h-6 text-yellow-500" />;
-      case 'avoid':
-        return <XCircle className="w-6 h-6 text-red-500" />;
-      default:
-        return null;
-    }
-  };
+  const filteredFoods = foods.filter(food =>
+    food.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    food.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const getRiskColor = (riskLevel) => {
-    switch (riskLevel) {
-      case 'safe':
-        return 'bg-green-50 border-green-200';
-      case 'caution':
-        return 'bg-yellow-50 border-yellow-200';
-      case 'avoid':
-        return 'bg-red-50 border-red-200';
-      default:
-        return 'bg-gray-50 border-gray-200';
-    }
+  const getRiskIcon = (riskLevel) => {
+    if (riskLevel === 'safe') return <CheckCircle style={{ width: '1.5rem', height: '1.5rem', color: '#22C55E' }} />;
+    if (riskLevel === 'caution') return <AlertCircle style={{ width: '1.5rem', height: '1.5rem', color: '#F59E0B' }} />;
+    return <XCircle style={{ width: '1.5rem', height: '1.5rem', color: '#EF4444' }} />;
   };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-        <div style={{ fontSize: '1.25rem' }}>Loading foods...</div>
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading your gout-safe food database...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '56rem', margin: '0 auto', padding: '1.5rem' }}>
+    <div className="app-container">
       {/* Header */}
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: '#111827', marginBottom: '0.5rem' }}>
-          🩺 Gout-Safe Food Checker
-        </h1>
-        <p style={{ color: '#6B7280' }}>
-          Instantly check if foods are safe for your gout diet
-        </p>
-        <p style={{ fontSize: '0.875rem', color: '#9CA3AF', marginTop: '0.5rem' }}>
-          Database: {foods.length} foods loaded
-        </p>
-      </div>
-
-      {/* Search Bar */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ position: 'relative' }}>
-          <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', width: '1.25rem', height: '1.25rem' }} />
-          <input
-            type="text"
-            placeholder="Search for any food... (e.g., beef, salmon, spinach)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              paddingLeft: '3rem',
-              paddingRight: '1rem',
-              paddingTop: '1rem',
-              paddingBottom: '1rem',
-              fontSize: '1.125rem',
-              border: '2px solid #E5E7EB',
-              borderRadius: '0.75rem',
-              outline: 'none'
-            }}
-          />
+      <header className="app-header">
+        <div className="header-content">
+          <h1 className="app-title">
+            <span className="emoji">🩺</span>
+            Gout-Safe Food Checker
+          </h1>
+          <p className="app-subtitle">
+            Make informed dietary choices for better gout management
+          </p>
         </div>
-      </div>
+      </header>
 
-      {/* Search Results */}
-      {filteredFoods.length > 0 && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1F2937', marginBottom: '1rem' }}>
-            Search Results ({filteredFoods.length})
-          </h2>
-          {filteredFoods.map((food) => (
-            <div
-              key={food._id}
-              onClick={() => setSelectedFood(food)}
-              style={{
-                padding: '1rem',
-                border: '2px solid',
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                marginBottom: '0.75rem',
-                borderColor: food.riskLevel === 'safe' ? '#BBF7D0' : food.riskLevel === 'caution' ? '#FDE68A' : '#FECACA',
-                backgroundColor: food.riskLevel === 'safe' ? '#F0FDF4' : food.riskLevel === 'caution' ? '#FFFBEB' : '#FEF2F2'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  {getRiskIcon(food.riskLevel)}
-                  <div>
-                    <h3 style={{ fontWeight: '600', color: '#111827' }}>{food.name}</h3>
-                    <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>{food.category}</p>
+      {/* Tab Navigation */}
+      <nav className="tab-navigation">
+        <button 
+          className={`tab-button ${activeTab === 'search' ? 'active' : ''}`}
+          onClick={() => setActiveTab('search')}
+        >
+          <Search size={18} />
+          <span>Search Foods</span>
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'about' ? 'active' : ''}`}
+          onClick={() => setActiveTab('about')}
+        >
+          <Info size={18} />
+          <span>About Gout</span>
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'guide' ? 'active' : ''}`}
+          onClick={() => setActiveTab('guide')}
+        >
+          <BookOpen size={18} />
+          <span>Diet Guide</span>
+        </button>
+      </nav>
+
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Search Tab */}
+        {activeTab === 'search' && (
+          <div className="search-tab">
+            {/* Welcome Banner */}
+            {!searchQuery && (
+              <div className="welcome-banner">
+                <h2>👋 Welcome to Your Gout Diet Assistant</h2>
+                <p>Search from our comprehensive database of foods to check their gout safety levels, purine content, and serving guidelines.</p>
+              </div>
+            )}
+
+            {/* Search Bar */}
+            <div className="search-container">
+              <div className="search-input-wrapper">
+                <Search className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search for any food... (e.g., paneer, chicken, dal)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+              </div>
+            </div>
+
+            {/* Search Results */}
+            {filteredFoods.length > 0 && searchQuery && (
+              <div className="search-results">
+                <h2 className="results-title">
+                  Search Results ({filteredFoods.length})
+                </h2>
+                {filteredFoods.map((food) => (
+                  <div
+                    key={food._id}
+                    onClick={() => setSelectedFood(food)}
+                    className={`food-card risk-${food.riskLevel}`}
+                  >
+                    <div className="food-card-content">
+                      <div className="food-card-left">
+                        {getRiskIcon(food.riskLevel)}
+                        <div className="food-info">
+                          <h3 className="food-name">{food.name}</h3>
+                          <p className="food-category">{food.category}</p>
+                        </div>
+                      </div>
+                      <div className="food-card-right">
+                        <div className="gout-score">
+                          Score: {food.goutImpactScore}
+                        </div>
+                        <div className="purine-content">
+                          {food.purineContent}mg purine
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+
+            {/* No results */}
+            {searchQuery && filteredFoods.length === 0 && (
+              <div className="no-results">
+                <p>No foods found for "{searchQuery}"</p>
+                <p className="suggestion">Try searching for common items like chicken, rice, or vegetables</p>
+              </div>
+            )}
+
+            {/* Quick Info Cards */}
+            {!searchQuery && (
+              <div className="info-cards-grid">
+                <div className="info-card safe">
+                  <CheckCircle className="info-card-icon" />
+                  <h3>Safe Foods</h3>
+                  <p>Low purine content (&lt;100mg)</p>
+                  <p className="info-card-detail">Eat freely without restrictions</p>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '1.125rem', fontWeight: 'bold' }}>
-                    Score: {food.goutImpactScore}
+                <div className="info-card caution">
+                  <AlertCircle className="info-card-icon" />
+                  <h3>Caution Foods</h3>
+                  <p>Moderate purine (100-200mg)</p>
+                  <p className="info-card-detail">Limit to small servings</p>
+                </div>
+                <div className="info-card avoid">
+                  <XCircle className="info-card-icon" />
+                  <h3>Avoid Foods</h3>
+                  <p>High purine (&gt;200mg)</p>
+                  <p className="info-card-detail">Minimize or eliminate</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* About Tab */}
+        {activeTab === 'about' && (
+          <div className="content-tab">
+            <div className="content-section">
+              <h2><Heart className="inline-icon" /> What is Gout?</h2>
+              <p>Gout is a type of inflammatory arthritis that causes sudden, severe attacks of pain, swelling, and redness in joints. It occurs when uric acid builds up in the blood and forms crystals in the joints.</p>
+              
+              <div className="highlight-box">
+                <h3>Key Facts:</h3>
+                <ul>
+                  <li>Affects approximately 4% of adults globally</li>
+                  <li>More common in men than women</li>
+                  <li>Can be managed through diet and medication</li>
+                  <li>Often affects the big toe first</li>
+                </ul>
+              </div>
+
+              <h3>Understanding Purines</h3>
+              <p>Purines are natural substances found in many foods. When your body breaks down purines, it produces uric acid. For people with gout, managing purine intake is crucial to preventing flare-ups.</p>
+
+              <div className="purine-scale">
+                <div className="purine-level low">
+                  <strong>Low Purines</strong>
+                  <p>&lt;100mg per 100g</p>
+                  <small>Safe to eat regularly</small>
+                </div>
+                <div className="purine-level moderate">
+                  <strong>Moderate Purines</strong>
+                  <p>100-200mg per 100g</p>
+                  <small>Eat in moderation</small>
+                </div>
+                <div className="purine-level high">
+                  <strong>High Purines</strong>
+                  <p>&gt;200mg per 100g</p>
+                  <small>Minimize or avoid</small>
+                </div>
+              </div>
+
+              <h3>Symptoms to Watch For</h3>
+              <ul className="symptoms-list">
+                <li>Intense joint pain, especially at night</li>
+                <li>Lingering discomfort lasting days to weeks</li>
+                <li>Inflammation and redness in affected joint</li>
+                <li>Limited range of motion</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Diet Guide Tab */}
+        {activeTab === 'guide' && (
+          <div className="content-tab">
+            <div className="content-section">
+              <h2><BookOpen className="inline-icon" /> Gout-Friendly Diet Guidelines</h2>
+              
+              <div className="diet-section good">
+                <h3>✅ Foods to Enjoy</h3>
+                <div className="food-list">
+                  <div className="food-category-list">
+                    <h4>Vegetables</h4>
+                    <p>Most vegetables are safe, including spinach, cauliflower, mushrooms</p>
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>
-                    {food.purineContent}mg purine
+                  <div className="food-category-list">
+                    <h4>Fruits</h4>
+                    <p>Cherries, berries, apples, oranges</p>
+                  </div>
+                  <div className="food-category-list">
+                    <h4>Whole Grains</h4>
+                    <p>Rice, whole wheat bread, oats, quinoa</p>
+                  </div>
+                  <div className="food-category-list">
+                    <h4>Dairy</h4>
+                    <p>Low-fat milk, yogurt, cheese</p>
+                  </div>
+                  <div className="food-category-list">
+                    <h4>Beverages</h4>
+                    <p>Water (8+ glasses daily), coffee, tea</p>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
 
-      {/* No results */}
-      {searchQuery && filteredFoods.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#6B7280' }}>
-          No foods found for "{searchQuery}"
+              <div className="diet-section moderate">
+                <h3>⚠️ Foods to Limit</h3>
+                <div className="food-list">
+                  <div className="food-category-list">
+                    <h4>Meats</h4>
+                    <p>Chicken, pork, lamb - limit to 4-6 oz portions</p>
+                  </div>
+                  <div className="food-category-list">
+                    <h4>Seafood</h4>
+                    <p>Crab, lobster, shrimp - occasional servings only</p>
+                  </div>
+                  <div className="food-category-list">
+                    <h4>Vegetables</h4>
+                    <p>Asparagus, cauliflower - moderate amounts</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="diet-section avoid">
+                <h3>🚫 Foods to Avoid</h3>
+                <div className="food-list">
+                  <div className="food-category-list">
+                    <h4>Organ Meats</h4>
+                    <p>Liver, kidney, brain, sweetbreads</p>
+                  </div>
+                  <div className="food-category-list">
+                    <h4>High-Purine Seafood</h4>
+                    <p>Anchovies, sardines, mackerel, herring</p>
+                  </div>
+                  <div className="food-category-list">
+                    <h4>Beverages</h4>
+                    <p>Alcohol (especially beer), sugary drinks</p>
+                  </div>
+                  <div className="food-category-list">
+                    <h4>Game Meats</h4>
+                    <p>Venison, duck, goose</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="tips-box">
+                <h3>💡 Quick Tips</h3>
+                <ul>
+                  <li>Stay well hydrated - aim for 8-12 glasses of water daily</li>
+                  <li>Maintain a healthy weight</li>
+                  <li>Limit alcohol consumption</li>
+                  <li>Avoid high-fructose corn syrup</li>
+                  <li>Consider vitamin C supplements (consult your doctor)</li>
+                  <li>Keep a food diary to identify triggers</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer with Signature */}
+      <footer className="app-footer">
+        <div className="footer-content">
+          <p className="footer-text">
+            Built with ❤️ for better health management
+          </p>
+          <p className="footer-signature">
+            Created by <strong>Vinay Kumar</strong> | © 2024
+          </p>
+          <p className="footer-disclaimer">
+            Disclaimer: This tool provides general information. Always consult healthcare professionals for medical advice.
+          </p>
         </div>
-      )}
+      </footer>
 
       {/* Food Detail Modal */}
       {selectedFood && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem',
-          zIndex: 50
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '1rem',
-            maxWidth: '42rem',
-            width: '100%',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            padding: '1.5rem'
-          }}>
+        <div className="modal-overlay" onClick={() => setSelectedFood(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             {/* Close Button */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div className="modal-header">
+              <div className="modal-title-section">
                 {getRiskIcon(selectedFood.riskLevel)}
                 <div>
-                  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' }}>
-                    {selectedFood.name}
-                  </h2>
-                  <p style={{ color: '#6B7280' }}>{selectedFood.category}</p>
+                  <h2 className="modal-food-name">{selectedFood.name}</h2>
+                  <p className="modal-food-category">{selectedFood.category}</p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedFood(null)}
-                style={{
-                  color: '#9CA3AF',
-                  fontSize: '1.5rem',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
+                className="modal-close-button"
               >
                 ✕
               </button>
             </div>
 
             {/* Description */}
-            <div style={{ marginBottom: '1rem' }}>
-              <p style={{ color: '#374151' }}>{selectedFood.description}</p>
+            <div className="modal-description">
+              <p>{selectedFood.description}</p>
             </div>
 
             {/* Why It Triggers Gout */}
-            <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#DBEAFE', borderRadius: '0.5rem' }}>
-              <h3 style={{ fontWeight: '600', color: '#1E3A8A', marginBottom: '0.5rem' }}>
-                Why It {selectedFood.goutImpactScore < 0 ? "Helps" : "Affects"} Gout:
-              </h3>
-              <p style={{ color: '#1E40AF' }}>
-                {selectedFood.whyItTriggersGout}
-              </p>
+            <div className="modal-info-box impact">
+              <h3>Why It {selectedFood.goutImpactScore < 0 ? "Helps" : "Affects"} Gout:</h3>
+              <p>{selectedFood.whyItTriggersGout}</p>
             </div>
 
             {/* Serving Guidelines */}
-            <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#D1FAE5', borderRadius: '0.5rem' }}>
-              <h3 style={{ fontWeight: '600', color: '#065F46', marginBottom: '0.5rem' }}>
-                Serving Guidelines:
-              </h3>
-              <p style={{ color: '#047857' }}>{selectedFood.servingGuidelines}</p>
+            <div className="modal-info-box serving">
+              <h3>Serving Guidelines:</h3>
+              <p>{selectedFood.servingGuidelines}</p>
             </div>
 
             {/* Nutritional Info */}
-            <div style={{ marginBottom: '1rem' }}>
-              <h3 style={{ fontWeight: '600', color: '#111827', marginBottom: '0.75rem' }}>
-                Nutritional Information (per 100g):
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-                <div style={{ backgroundColor: '#F3F4F6', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                  <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Calories</p>
-                  <p style={{ fontSize: '1.125rem', fontWeight: '600' }}>{selectedFood.nutritionalInfo.calories}</p>
+            <div className="modal-nutrition">
+              <h3>Nutritional Information (per 100g):</h3>
+              <div className="nutrition-grid">
+                <div className="nutrition-item">
+                  <p className="nutrition-label">Calories</p>
+                  <p className="nutrition-value">{selectedFood.nutritionalInfo.calories}</p>
                 </div>
-                <div style={{ backgroundColor: '#F3F4F6', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                  <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Protein</p>
-                  <p style={{ fontSize: '1.125rem', fontWeight: '600' }}>{selectedFood.nutritionalInfo.protein}g</p>
+                <div className="nutrition-item">
+                  <p className="nutrition-label">Protein</p>
+                  <p className="nutrition-value">{selectedFood.nutritionalInfo.protein}g</p>
                 </div>
-                <div style={{ backgroundColor: '#F3F4F6', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                  <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Purine Content</p>
-                  <p style={{ fontSize: '1.125rem', fontWeight: '600', color: '#DC2626' }}>
-                    {selectedFood.purineContent}mg
-                  </p>
+                <div className="nutrition-item">
+                  <p className="nutrition-label">Purine Content</p>
+                  <p className="nutrition-value purine">{selectedFood.purineContent}mg</p>
                 </div>
-                <div style={{ backgroundColor: '#F3F4F6', padding: '0.75rem', borderRadius: '0.5rem' }}>
-                  <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>Gout Impact</p>
-                  <p style={{ fontSize: '1.125rem', fontWeight: '600' }}>
-                    {selectedFood.goutImpactScore}/10
-                  </p>
+                <div className="nutrition-item">
+                  <p className="nutrition-label">Gout Impact</p>
+                  <p className="nutrition-value">{selectedFood.goutImpactScore}/10</p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Info Cards */}
-      {!searchQuery && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '2rem' }}>
-          <div style={{ padding: '1.5rem', backgroundColor: '#F0FDF4', borderRadius: '0.75rem', border: '2px solid #BBF7D0' }}>
-            <CheckCircle style={{ width: '2rem', height: '2rem', color: '#22C55E', marginBottom: '0.5rem' }} />
-            <h3 style={{ fontWeight: '600', color: '#166534' }}>Safe Foods</h3>
-            <p style={{ color: '#15803D', fontSize: '0.875rem' }}>Low purine, eat freely</p>
-          </div>
-          <div style={{ padding: '1.5rem', backgroundColor: '#FFFBEB', borderRadius: '0.75rem', border: '2px solid #FDE68A' }}>
-            <AlertCircle style={{ width: '2rem', height: '2rem', color: '#F59E0B', marginBottom: '0.5rem' }} />
-            <h3 style={{ fontWeight: '600', color: '#92400E' }}>Caution Foods</h3>
-            <p style={{ color: '#B45309', fontSize: '0.875rem' }}>Moderate risk, limit intake</p>
-          </div>
-          <div style={{ padding: '1.5rem', backgroundColor: '#FEF2F2', borderRadius: '0.75rem', border: '2px solid #FECACA' }}>
-            <XCircle style={{ width: '2rem', height: '2rem', color: '#EF4444', marginBottom: '0.5rem' }} />
-            <h3 style={{ fontWeight: '600', color: '#991B1B' }}>Avoid Foods</h3>
-            <p style={{ color: '#B91C1C', fontSize: '0.875rem' }}>High purine, minimize</p>
           </div>
         </div>
       )}
@@ -283,4 +399,4 @@ const FoodSearch = () => {
   );
 };
 
-export default FoodSearch;
+export default App;
